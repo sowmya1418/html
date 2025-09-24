@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+    DOCKER_HUB_REPO = "sowmyaadama/my-ec2"
+    DOCKER_CREDENTIALS_ID = "dockerhub-credentials"
+}
+
     stages {
         stage('Build Docker Image') {
             steps {
@@ -10,6 +15,15 @@ pipeline {
                 }
             }
         }
+        stage('push docker image')
+        {
+            steps{
+                script{
+                  docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
+                    dockerImage.push("latest")
+                   }
+                }
+            }
 
         stage('Run Docker Container') {
             steps {
