@@ -2,28 +2,29 @@ pipeline {
     agent any
 
     environment {
-    DOCKER_HUB_REPO = "sowmyaadama/my-ec2"
-    DOCKER_CREDENTIALS_ID = "dockerhub-credentials"
-}
+        DOCKER_HUB_REPO = "sowmyaadama/my-ec2"
+        DOCKER_CREDENTIALS_ID = "dockerhub-credentials"
+    }
 
     stages {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Force rebuild to always include updated index.html
-                    dockerImage = docker.build("my-ec2-web-app:latest", "--no-cache .")
+                    // Build image with Docker Hub repo name
+                    dockerImage = docker.build("${DOCKER_HUB_REPO}:latest", "--no-cache .")
                 }
             }
         }
-        stage('push docker image')
-        {
-            steps{
-                script{
-                  docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
-                    dockerImage.push("latest")
-                   }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKER_CREDENTIALS_ID) {
+                        dockerImage.push("latest")
+                    }
                 }
             }
+        }
 
         stage('Run Docker Container') {
             steps {
@@ -31,8 +32,8 @@ pipeline {
                     // Stop & remove existing container if running
                     sh "docker rm -f my-web-container || true"
 
-                    // Run new container with updated image
-                    sh "docker run -d -p 80:80 --name my-web-container my-ec2-web-app:latest"
+                    // Run the new container from pushed image
+                    sh "docker run -d -p 80:80 --name my-web-container ${DOCKER_HUB_REPO}:latest"
                 }
             }
         }
